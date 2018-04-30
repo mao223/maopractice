@@ -83,7 +83,7 @@ var svg = d3.select("body").append("svg")
 var link = svg.append("g").selectAll(".link"),
     node = svg.append("g").selectAll(".node");
 
-d3.json("https://raw.githubusercontent.com/mao223/GitPractice/master/hiernet.json", function(error, classes) {
+d3.json("hiernet.json", function(error, classes) {
   if (error) throw error;
 
   // Build package hierarchy as tree, accessed by root node
