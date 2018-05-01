@@ -76,8 +76,11 @@ p { margin: 0 0 10px 0; }
   <section>
     <a href="hiernet.html">Visualization
       <div class="box">
-        <iframe src="hiernet.html" scrolling="no">
+        <iframe ID=myframe src="hiernet.html" scrolling="no">
         </iframe>
+        <SCRIPT>
+          window.onload = function(){document.getElementById('myframe').contentWindow.document.body.style = 'zoom:50%;';};
+        </SCRIPT>
       </div>
   </section>
 
