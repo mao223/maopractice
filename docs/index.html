@@ -1,226 +1,110 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
+<!DOCTYPE HTML>
+<html xml:lang="en" lang="en">
+<head>
+  <title>CSE512 | A3 Cutting-Edge Visualization: Interactive Surgical Patient Charts</title>
+  <style media="all">
+* { padding: 0; margin: 0; }
 
-.node {
-  font: 350 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
-  fill: black;
+body {
+  margin: 0 auto 0 auto;
+  padding: 0;
+  max-width: 1200px;
+  font-family: "Avenir", "Avenir Next", Helvetica Neue, Arial;
+  font-size: 0.95em;
 }
 
-.node:hover {
-  fill: #d62728;
+a, a:visited { text-decoration: none; color: #7533f4; }
+a:hover { text-decoration: underline; color: #f4b014; }
+
+h1, h2, h3, h4, h5 {
+  color: #492a7c;
+  background-color: inherit;
+  font-weight: normal;
+  padding: 0 0 5px 0;
+  margin: 15px 0 0 0;
+  border: none;
+  clear: right;
+}
+h1 { font-size: 24pt; margin:  5px 0 10px 0; line-height: 28px; }
+h2 { font-size: 14pt; margin: 30px 0 15px 0; letter-spacing: 0.01em; border-bottom: 1px solid #ccc;  line-height: 20px;}
+h3 { font-size: 13pt; }
+h4 { font-size: 12pt; }
+h5 { font-size: 11pt; }
+p { margin: 0 0 10px 0; }
+
+.content {
+  margin: 0;
+  padding: 15px 20px;
+  background-color: #ffffff;
 }
 
-.link {
-  stroke: lightsteelblue;
-  stroke-opacity: 0.3;
-  fill: none;
-  pointer-events: none;
+.title, .title h1, .title a {
+  color: #492a7c;
+  font-size: 24pt;
+  margin-bottom: 20px;
+  margin-top: 5px;
 }
 
-.node:hover,
-.node--source,
-.node--target {
-  font-weight: 500;
+.footer {
+  border-top: 1px solid #ccc;
+  margin-top: 30px;
+  padding-top: 4px;
+  text-align: right;
+  font-size: 12px;
 }
-
-
-.node--source {
-  /* fill: #2ca02c; */
-  fill: #d62728;
+.footer a {
+  color: #21346B;
 }
-
-.node--target {
-  fill: #d62728;
-    font-size: 20px;
-
+.footer a:hover {
+  color: #ce3333;
 }
-.node--clicked {
-  /* fill: #2ca02c; */
-  fill: #d62728;
-  font-weight: 700;
-    font-size: 20px;
-}
-
-.link--source,
-.link--target {
-  stroke-opacity: 0.9;
-  stroke-width: 1.3px;
-}
-
-.link--source {
-  stroke: #d62728;
-}
-
-.link--target {
-  /* stroke: #2ca02c; */
-  stroke: #d62728;
-}
-
-</style>
+  </style>
+</head>
 <body>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script>
+<div class="content">
 
-var diameter = 990,
-    radius = diameter / 2,
-    innerRadius = radius - 120;
+  <section class="title">
+    <a href="/">Cutting-Edge Visualization: Interactive Surgical Patient Charts</a>
+  </section>
 
-var cluster = d3.cluster()
-    .size([360, innerRadius]);
+  <section>
+    <p>
+      <strong>Team Members</strong>: Gabriel Erion, Alex Okeson, Jose Mario Pineda
+    </p>
+  </section>
 
-var line = d3.radialLine()
-    .curve(d3.curveBundle.beta(0.85))
-    .radius(function(d) { return d.y; })
-    .angle(function(d) { return d.x / 180 * Math.PI; });
+  <section>
+    <a href="hiernet.html">Visualization
+      <style>
+        #wrap { width: 1620px; height: 3500px; padding: 0; position:relative; left:-100px; top:0px; overflow: hidden; }
+        #frame { width: 1620px; height: 3500px; position:relative; left:-65px; top:0px; }
+        #frame { -ms-zoom: 0.7; -moz-transform: scale(0.7); -moz-transform-origin: 0px 0; -o-transform: scale(0.7); -o-transform-origin: 0 0; -webkit-transform: scale(0.7); -webkit-transform-origin: 0 0; }
+      </style>
+      <div class="box">
+        <iframe src="hiernet.html" width = "1000px" height = "1000px">
+        </iframe>
+      </div>
+  </section>
 
-var svg = d3.select("body").append("svg")
-    .attr("width", diameter)
-    .attr("height", diameter)
-  .append("g")
-    .attr("transform", "translate(" + radius + "," + radius + ")");
+  <section>
+    <h2>Design Rationale</h2>
+    <p>
+      <em>[Add: The rationale for your design decisions. How did you choose your particular visual encodings and interaction techniques? What alternatives did you consider and how did you arrive at your ultimate choices?]</em>
+    </p>
+  </section>
 
-var link = svg.append("g").selectAll(".link"),
-    node = svg.append("g").selectAll(".node");
+  <section>
+    <h2>Design &amp; Development Process</h2>
+    <p>
+      <em>[Add: An overview of your design and development process. Describe how the work was split among the team members. Include a commentary on the development process, including answers to the following questions: Roughly how much time did you spend developing your application (in people-hours)? What aspects took the most time?]</em>
+    </p>
+  </section>
 
-d3.json("hiernet.json", function(error, classes) {
-  if (error) throw error;
+  <div class="footer">
+    <a href="https://cse512-18s.github.io/">CSE 512 Data Visualization</a> -
+    <a href="http://www.washington.edu">University of Washington</a>
+  </div>
 
-  // Build package hierarchy as tree, accessed by root node
-  var root = packageHierarchy(classes)
-      .sum(function(d) { return d.size; });
-
-  // Create d3 cluster graph
-  cluster(root);
-
-  // Edges
-  link = link
-    .data(packageImports(root.descendants()))
-    .enter().append("path")
-      .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
-      .attr("class", "link")
-      .attr("d", line);
-
-  // Nodes
-  node = node
-    .data(root.descendants())
-    .enter().append("text")
-      .attr("class", "node")
-      .attr("dy", "0.31em")
-      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
-      .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-      .text(function(d) { 
-        if (d.height<8) {return d.data.name; }
-      else {return "";}})
-      .on("mouseover", mouseovered)
-      .on("mouseout", mouseouted)
-      .on("click",clicked)
-});
-
-function mouseovered(d) {
-  node
-      .each(function(n) { if (n.clicked) {} else {n.target = n.source = false; }});
-
-  link
-      .classed("link--target", function(l) { if ((l.target === d) || (l.target.clicked || l.source.clicked)) 
-        return l.target.target = true; })
-      .classed("link--source", function(l) { if ((l.source === d) || (l.target.clicked || l.source.clicked)) 
-      return l.source.source = true; })
-    .filter(function(l) { return l.target === d || l.source === d || l.target.clicked || l.source.clicked; })
-      .raise();
-
-  node
-      .classed("node--target", function(n) {
-        // if (n.clicked) {return false;}
-        // else 
-        {return n.target; }})
-      .classed("node--source", function(n) {
-        // if (n.clicked) {return false;}
-        // else 
-        {return n.source; }});
-}
-
-function mouseouted(d) {
-  link
-      .classed("link--target", function(l) {if (l.target===d) {return l.target.target=false;}})
-      .classed("link--source", function(l) {if (l.source===d) {return l.source.source=false;}})
-      .classed("link--target", function(l) {if (l.target.clicked || l.source.clicked) {return l.target.target=true;}})
-      .classed("link--source", function(l) {if (l.target.clicked || l.source.clicked) {return l.source.source=true;}});
-
-  node //function(d) {d.clicked;}
-      .classed("node--target", function(l) {return l.target;})
-      .classed("node--source", function(l) {return l.source;});
-}
-
-function clicked(d) {
-  console.log(d);
-  if (d.clicked) {
-    d.clicked = 0;
-    mouseouted(d);
-  }
-  else {
-    d.clicked = 1;
-    mouseovered(d);
-  }
-  node
-    .classed("node--clicked", function(n) {return n.clicked;});
-
-}
-
-
-// Lazily construct the package hierarchy from class names.
-function packageHierarchy(classes) {
-  var map = {};
-
-  function find(name, data) {
-    var node = map[name], i;
-    if (!node) {
-      if (data) {
-        data.children = [];
-        node = map[name] = data;
-      }
-      else {
-        node = map[name] = {name: name, children: []};
-      }
-      //node = map[name] = data || {name: name, children: []};
-      if (name.length) {
-        console.log(name);
-        node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
-        console.log(node.parent);
-        node.parent.children.push(node);
-        node.key = name.substring(i + 1);
-      }
-    }
-    return node;
-  }
-
-  classes.forEach(function(d) {
-    find(d.name, d);
-  });
-
-  return d3.hierarchy(map[""]);
-}
-
-// Return a list of imports for the given array of nodes.
-function packageImports(nodes) {
-  var map = {},
-      imports = [];
-
-  // Compute a map from name to node.
-  nodes.forEach(function(d) {
-    map[d.data.name] = d;
-  });
-
-  // For each import, construct a link from the source to target node.
-  nodes.forEach(function(d) {
-    if (d.data.imports) d.data.imports.forEach(function(i) {
-      console.log(i);
-      console.log(map[i]);
-      imports.push(map[d.data.name].path(map[i]));
-    });
-  });
-
-  return imports;
-}
-
-</script>
+</div>
+</body>
+</html>
