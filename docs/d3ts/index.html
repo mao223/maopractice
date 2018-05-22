@@ -1,0 +1,106 @@
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="d3_timeseries.js"></script>
+<div id="chart1"></div>
+<div id="chart2"></div>
+<div id="chart3"></div>
+<div id="chart4"></div>
+<div id="chart5"></div>
+<div id="chart6"></div>
+
+<script>
+//var data = createRandomData(600,[1000,1000000])
+// [{date:new Date('2013-01-01'),n:120,n2:200}]
+charts = [];
+//var dsets = [[],[],[],[],[],[]];
+names = ["II","V5","SpO2","Art","BP","ETCO2"];
+interval = 1000.0/60;
+var data = [];
+
+d3.csv("data/alldata.tsv")
+    .row(function(d) {return {date: new Date((+d.date)*interval),
+        II: +d.II, V5: +d.V5, SpO2: +d.SpO2, Art: +d.Art, BP: +d.BP, ETCO2: +d.ETCO2};})
+    .get(function(error, rows){buildPlot(rows);})
+
+function buildPlot(rows) {
+    console.log(data);
+    rows.forEach(function(r) {data.push(r);});
+    for (var i =0; i<6; i++) {
+    var chart = d3_timeseries()
+        .addSerie(data,{x:'date',y:names[i]},{interpolate:'linear'})
+        //.addSerie(null,{x:'date',y:'n2'},
+        //           {interpolate:'linear'})
+        .margin.left(70)
+        .width(640)
+        .height(200)
+    charts.push(chart);
+    }
+    for (var i=0; i<6; i++)
+    {
+        charts[i]('#chart'+i.toString())
+    }
+}
+// <!-- 
+// for (var i = 0; i<6; i++)
+// {
+//     console.log(i);
+//     //var cur_dset = dsets[i];
+//     //var tmplist = [];
+//     // d3.csv("data/"+names[i],
+//     //     function(d) {
+//     //         return {
+//     //             date : new Date((0+d.date)*interval),
+//     //             //date : +d.date,
+//     //             n: +d.n};
+//     //         },
+//     //     function(d) {
+//     //         console.log(i);
+//     //         d.forEach( d_cur.push);
+//     //     });
+//     // d3.csv("data/"+names[i])
+//     //     .row(function(d) {return {date: new Date((0+d.date)*interval), n: +d.n};})
+//     //     .get(function(error, rows){console.log(i); rows.forEach(tmplist.push); dsets[i].push(...tmplist)});
+
+//     var chart = d3_timeseries()
+//         .addSerie(data,{x:'date',y:names[i]},{interpolate:'step-before'})
+//         //.addSerie(null,{x:'date',y:'n2'},
+//         //           {interpolate:'linear'})
+//         .margin.left(70)
+//         .width(640)
+//         .height(200)
+//     charts.push(chart);
+// }
+
+
+// function createRandomData(n,range,rand)
+//     {
+//     if(range==null)
+//     range=[0,100]
+//     if(rand==null)
+//     rand=1/20
+
+//     var num = range[0] + Math.floor(Math.random()*(range[1]-range[0]))
+//     var num2 = range[0] + Math.floor(Math.random()*(range[1]-range[0]))
+//     var num3 = num
+//     var d= new Date('2013-01-01')
+//     var data = []
+//     var rgen = d3.randomNormal(0,(range[1]-range[0])*rand)
+//     for (var i = 0; i<n; i++)
+//     {
+
+//     data.push({date:d,n:num,n2:num2,n3:num3,
+//             ci_up:num3*1.05,ci_down:num3*0.95
+//     })
+//     d = new Date(d.getTime() + 1000*60*60*24)
+//     num = num+rgen()
+//     num3 = num+rgen()/3
+//     num = Math.min(Math.max(num,range[0]),range[1])
+//     num2 = num2+rgen()
+//     num2 = Math.min(Math.max(num2,range[0]),range[1])
+
+
+
+//     }
+//     return data;
+//     } -->
+
+</script>

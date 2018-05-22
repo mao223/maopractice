@@ -1,1 +1,5 @@
-# cutting-edge-anesthesia
+Cutting-Edge Anesthesia: Visualizing Patient Vital Signs During Surgery
+Gabriel Erion, Alex Okeson, Jose Mario Pineda
+
+Abstract:
+We would like to do a redesign of the anesthesiology interface in an operating room. Recent research has suggested that other data than is currently displayed would be more helpful for anesthesiologists to prevent adverse surgical events. We would like to take this research and the current display systems and create a new, interactive interface with more data and better visualizations which help anesthesiologists to perform better during surgery. In order to do this, we would like to do a small scale user study with 1 anesthesiologist who Gabe and Alex already collaborate with to find out current practices and needs met and not met by the current system in place. We will then use D3 and data from the Lee Lab to redesign the interface to include static features, machine learning algorithm predictions, machine learning explanations, and various scales of time series features. As a stretch goal, we would like to take this interface and test non-anesthesiologists (probably grad students in the Lee Lab) at how quickly they can retrieve relevant information compared to the current interface.
