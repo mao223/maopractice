@@ -19,6 +19,12 @@ function functorkeyscale(v, scale)  {
   };
 }
 
+function keyAllowed(ky,kx,thresh) {
+  return function(d) {
+    return keyNotNull(ky)(d) && (d[kx]<=thresh);
+  }
+}
+
 function keyNotNull(k) {
   return function (d)  {
     return d.hasOwnProperty(k) && d[k] !== null && !isNaN(d[k]);
@@ -33,26 +39,32 @@ function fk(v) {
 
 function d3_timeseries()  {
   // default
-  var height = 480;
-  var width = 600;
+  var height = 155;
+  var width = 360;
 
   var drawerHeight = 40;
   var drawerTopMargin = 10;
   var margin = {top: 10, bottom: 20, left: 30, right: 10};
 
   var series = [];
+  var summary = null;
+  var drawerMap = {"II":"HR","V5":"HR","SpO2":"RR","Art":"MAP","BP":"HR","ETCO2":"ETCO2","QRS":"sec","ST":"sec","QT":"sec","PR":"sec"};
 
   var yscale = d3.scaleLinear();
+  var smallyscale = d3.scaleLinear();
   var xscale = d3.scaleTime();
   yscale.label = "";
+  smallyscale.label = "";
   xscale.label = "";
-
-  var brush = d3.brushX();
 
   var svg, container, serieContainer, annotationsContainer, drawerContainer, mousevline;
   var fullxscale, tooltipDiv;
 
   yscale.setformat = function (n) {
+    return n.toLocaleString();
+  };
+
+  smallyscale.setformat = function (n) {
     return n.toLocaleString();
   };
   xscale.setformat = xscale.tickFormat();
@@ -263,10 +275,16 @@ function d3_timeseries()  {
     }
   }
 
-  function drawMiniDrawer() {
-    var smallyscale = yscale.copy()
-      .range([drawerHeight - drawerTopMargin, 0]);
-    var serie = series[0];
+  function drawMiniDrawer(serie) {
+    if (serie == null) {var serie = series[0];}
+    //console.log(serie.data);
+    //console.log(serie.aes.x);
+    //console.log(serie.aes.y);
+    //console.log(serie.data[serie.aes.y]);
+
+    smallyscale.range([drawerHeight - drawerTopMargin,0])
+      .domain([d3.min(serie.data.map(d=>d[serie.aes.y])),d3.max(serie.data.map(d=>d[serie.aes.y]))]);
+    
     var line = d3.line()
       .x(functorkeyscale(serie.aes.x, fullxscale))
       .y(functorkeyscale(serie.aes.y, smallyscale))
@@ -288,16 +306,16 @@ function d3_timeseries()  {
   function mouseMove() {
     var x = d3.mouse(container.node())[0];
     x = xscale.invert(x);
-    mousevline.datum({x: x, visible: true});
-    mousevline.update();
-    updatefocusRing(x);
-    updateTip(x);
+    //mousevline.datum({x: x, visible: true});
+    //mousevline.update();
+    //updatefocusRing(x);
+    //updateTip(x);
   }
   function mouseOut() {
-    mousevline.datum({x: null, visible: false});
-    mousevline.update();
-    updatefocusRing(null);
-    updateTip(null);
+    //mousevline.datum({x: null, visible: false});
+    //mousevline.update();
+    //updatefocusRing(null);
+    //updateTip(null);
   }
 
   var chart = function (elem)  {
@@ -311,15 +329,44 @@ function d3_timeseries()  {
       s.dateMax = extent[1];
       return s;
     });
+    if (summary) {
+	    var sum_extent = d3.extent(summary.data.map(functorkey(summary.aes.y)));
+	    summary.min = sum_extent[0];
+	    summary.max = sum_extent[1];
+	    sum_extent = d3.extent(summary.data.map(functorkey(summary.aes.x)));
+	    summary.dateMin = sum_extent[0];
+	    summary.dateMax = sum_extent[1];
+	    summary.interpolationFunction = d3.curveLinear;
+	    var line = d3.line()
+	    .x(functorkeyscale(summary.aes.x, xscale))
+	    .y(functorkeyscale(summary.aes.y, yscale))
+	    .curve(summary.interpolationFunction)
+	    .defined(keyNotNull(summary.aes.y));
+	    summary.line = line;
+	    summary.options.label = summary.options.label || summary.options.name ||
+	      summary.aes.label || summary.aes.y;
+	    summary.find = function (date) {
+	      var bisect = d3.bisector(fk(summary.aes.x)).left;
+	      var i = bisect(summary.data, date) - 1;
+	      if (i == -1) {
+		return null;
+	      }
+
+	      // look to far after serie is defined
+	      if (i == summary.data.length - 1 && summary.data.length > 1 &&
+	    Number(date) - Number(summary.data[i][summary.aes.x]) > Number(summary.data[i][summary.aes.x]) - Number(summary.data[i - 1][summary.aes.x])) {
+		return null;
+	      }
+	      return summary.data[i];
+	    };
+	}
 
 
     // set scales
-
     yscale.range([height - margin.top - margin.bottom - drawerHeight - drawerTopMargin, 0])
       .domain([d3.min(series.map(fk('min'))),
                d3.max(series.map(fk('max')))])
       .nice();
-
 
     xscale.range([0, width - margin.left - margin.right])
       .domain([d3.min(series.map(fk('dateMin'))),
@@ -371,7 +418,7 @@ function d3_timeseries()  {
 
 
     // vertical line moving with mouse tip
-    mousevline = svg.append('g')
+/*    mousevline = svg.append('g')
       .datum({
         x: new Date(),
         visible: false
@@ -392,56 +439,53 @@ function d3_timeseries()  {
           return d.visible ? 1 : 0;
         });
     };
-    mousevline.update();
+    //mousevline.update();
+*/
 
-    var xAxis = d3.axisBottom().scale(xscale).tickFormat(xscale.setformat);
+    var xAxis = d3.axisBottom().scale(xscale).ticks(10).tickFormat(xscale.setformat);
+    var smallxAxis = d3.axisBottom().scale(xscale).ticks(6).tickFormat(xscale.setformat);
     var yAxis = d3.axisLeft().scale(yscale).tickFormat(yscale.setformat);
+    var smallyAxis = d3.axisLeft().scale(smallyscale).ticks(2).tickFormat(smallyscale.setformat);
 
-    brush.extent([[fullxscale.range()[0], 0], [fullxscale.range()[1], drawerHeight - drawerTopMargin]])
-
-      .on('brush', () => {
-        let selection = d3.event.selection;
-
-        xscale.domain(selection.map(fullxscale.invert, fullxscale));
-
-        series.forEach(drawSerie);
-        svg.select(".focus.x.axis").call(xAxis);
-        mousevline.update();
-        updatefocusRing();
-      })
-
-      .on('end', () => {
-        let selection = d3.event.selection;
-        if (selection === null) {
-          xscale.domain(fullxscale.domain());
-
-          series.forEach(drawSerie);
-          svg.select(".focus.x.axis").call(xAxis);
-          mousevline.update();
-          updatefocusRing();
-        }
-      });
+    var brush = d3.brushX()
+      .handleSize([-1])
+      .extent([[fullxscale.range()[0], 0], [fullxscale.range()[1], drawerHeight - drawerTopMargin]])
+      //.call(brushed)
+      .on("start brush", brushed)
+      // .on("end",brushcentered)
+      ;
 
     svg.append('g')
       .attr('class', 'd3_timeseries focus x axis')
       .attr("transform", "translate(" + margin.left + "," + (height - margin.bottom - drawerHeight - drawerTopMargin) + ")")
       .call(xAxis);
 
+    drawMiniDrawer(summary);
+
     drawerContainer.append('g')
       .attr('class', 'd3_timeseries x axis')
       .attr("transform", "translate(0," + (drawerHeight) + ")")
-      .call(xAxis);
+      .call(smallxAxis);
+    
+    drawerContainer.append('g')
+      .attr('class', 'd3_timeseries y axis')
+      .attr("transform", "translate(0," + margin.top + ")")
+      .call(smallyAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -margin.top - d3.mean(smallyscale.range())+10)  // added +5
+      .attr("dy", ".71em")
+      .attr('y', -margin.left+5) 
+      .style("text-anchor", "middle")
+      .style("fill","black")
+      .text(drawerMap[summary.aes.y]);
 
-    drawerContainer.append("g")
-      .attr("class", "d3_timeseries brush")
-      .call(brush)
-      .attr('transform', `translate(0, ${drawerTopMargin})`)
-      .attr("height", (drawerHeight - drawerTopMargin));
 
+    
     svg.append('g')
       .attr('class', 'd3_timeseries y axis')
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-      .call(yAxis)
+      //.call(yAxis)
       .append("text")
       .attr("transform", "rotate(-90)")
       .attr("x", -margin.top - d3.mean(yscale.range()))
@@ -451,14 +495,14 @@ function d3_timeseries()  {
       .text(yscale.label);
 
     // catch event for mouse tip
-    svg.append('rect')
-      .attr('width', width)
-      .attr('class', 'd3_timeseries mouse-catch')
-      .attr('height', height - drawerHeight)
-    // .style('fill','green')
-      .style('opacity', 0)
-      .on('mousemove', mouseMove)
-      .on('mouseout', mouseOut);
+    // svg.append('rect')
+    //   .attr('width', width)
+    //   .attr('class', 'd3_timeseries mouse-catch')
+    //   .attr('height', height - drawerHeight)
+    // // .style('fill','green')
+    //   .style('opacity', 0)
+    //   .on('mousemove', mouseMove)
+    //   .on('mouseout', mouseOut);
 
     tooltipDiv = d3.select(elem)
       .style('position', 'relative')
@@ -469,8 +513,112 @@ function d3_timeseries()  {
 
     series.forEach(createLines);
     series.forEach(drawSerie);
-    drawMiniDrawer();
+    //console.log(series);
+    //console.log(summary);
+    
+    drawerContainer.append("g")
+      .attr("class", "d3_timeseries brush")
+      .call(brush)
+      //.call(brush.move, [fullxscale.range()[1]-10, fullxscale.range()[1]])
+      .call(brush.move, [0,5])
+      .attr('transform', `translate(0, ${drawerTopMargin})`)
+      .attr("height", (drawerHeight - drawerTopMargin))
+      .style("stroke-opacity",0)
+      .style("stroke-width",20)
+      .selectAll(".overlay")
+        .each(function(d) { d.type = "selection"; }) // Treat overlay interaction as move.
+        //.on("mousedown touchstart", brushcentered)
+        .transition()
+        //.on("start",brushhandle)
+        //.ease(d3.easeLinear)
+        .on("start",brushnext,null)
+        .delay(7500)
+        ;
+
+    var cur_farthest = 5;
+    function brushcentered() {
+      var dx = 5, // Use a fixed width when recentering.
+          cx = d3.mouse(this)[0],
+          x0 = cx - dx / 2,
+          x1 = cx + dx / 2;
+      max_extent = d3.min(fullxscale.range()[1],cur_farthest);
+      d3.select(this.parentNode).call(brush.move, 
+        // x1 > fullxscale.range()[1] 
+        // ? [fullxscale.range()[1] - dx, fullxscale.range()[1]] 
+        // : x0 < 0 ? [0, dx] : [x0, x1]
+        x1 > max_extent
+        ? [max_extent - dx, max_extent]
+        : x0 < 0 ? [0, dx] : [x0, x1]
+      );
+    };
+
+    var handle = null;
+    function brushhandle(){
+      handle = this.parentNode;
+    }
+
+    var t = d3.interval(function(elapsed){
+      series.forEach(function(s){
+        s.line = d3.line()
+        .x(functorkeyscale(s.aes.x, xscale))
+        .y(functorkeyscale(s.aes.y, yscale))
+        .curve(s.interpolationFunction)
+        .defined(keyAllowed(s.aes.y,s.aes.x,elapsed));
+        drawSerie(s)});
+      },100); 
+
+    var cur_locator = null;
+    function brushnext() {
+
+      cur_locator = cur_locator || this.parentNode;
+      var selection = d3.select(cur_locator);
+      var dx = 5, // Use a fixed width when recentering.
+          box = selection._groups[0][0].children[1],
+          right_extent = parseInt(box.getAttribute("x"),10)+parseInt(box.getAttribute("width"),10),
+          snapped = cur_farthest-right_extent<3,
+          x0 = cur_farthest-dx,
+          x1 = cur_farthest;
+      cur_farthest += 1;
+      if (snapped){
+      d3.select
+      (cur_locator)
+      .call(brush.move, x1 > fullxscale.range()[1] ? [fullxscale.range()[1] - dx, fullxscale.range()[1]] : x0 < 0 ? [0, dx] : [x0, x1])
+      .call(brush)
+      .transition()
+      .ease(d3.easeLinear)
+      .duration(900/320*1000)
+      .on("end",brushnext)
+      ;}
+      else {
+        d3.select(cur_locator)
+        .call(function(){})
+        .transition()
+        .ease(d3.easeLinear)
+        .duration(900/320*1000)
+        .on("end",brushnext);
+      }
+    };
+
+    function brushed() {
+      selection = d3.event.selection;
+
+      xscale.domain(selection.map(fullxscale.invert, fullxscale));
+
+      series.forEach(drawSerie);
+      svg.select(".focus.x.axis")
+      .transition()
+      .ease(d3.easeLinear)
+      .call(xAxis);
+      //mousevline.update();
+      //updatefocusRing();
+    };
+
   };
+
+  
+
+  
+ 
 
 
   chart.width = function (_) {
@@ -521,7 +669,7 @@ function d3_timeseries()  {
       }
     };
   };
-
+  chart.smallyscale = scaleGetSet(smallyscale);
   chart.yscale = scaleGetSet(yscale);
   chart.xscale = scaleGetSet(xscale);
 
@@ -533,6 +681,17 @@ function d3_timeseries()  {
     series.push({data: data, aes: aes, options: options});
     return chart;
   };
-
+  chart.addSum = function (data, aes, options) {
+    //if (!data && series.length > 0)
+    //  data = series[0].data;
+    if (!options.color)
+      options.color = defaultColors[series.length % defaultColors.length];
+    summary = {data: data, aes: aes, options: options};
+    //console.log("Summary added");
+    return chart;
+  };
+  chart.summary = summary;
+  chart.series = series;
+  chart.svg = svg;
   return chart;
 }

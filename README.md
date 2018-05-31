@@ -1,4 +1,5 @@
 Cutting-Edge Anesthesia: Visualizing Patient Vital Signs During Surgery
+
 Gabriel Erion, Alex Okeson, Jose Mario Pineda
 
 Abstract:
